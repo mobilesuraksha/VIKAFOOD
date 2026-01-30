@@ -1,0 +1,7 @@
+1. index.html (Customer App - Single Shop Menu)
+Feature: Sidha Menu khulega (Shop select karne ki zaroorat nahi).
+
+Easy Change: Upar CONFIG variable mein naam badalte hi Title, Logo, Header sab change ho jayega.
+
+Har file ke sabse neeche (Script section mein) maine ek "EASY SETUP" box bana diya hai. Aapko bas wahan naam badalna hai,
+ aur poori App mein (Header, Title, Banner, Footer) sab jagah naam aur logo apne aap badal jayega.

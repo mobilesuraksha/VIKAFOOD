@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VIKA Rider</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #0f172a; color: #f8fafc; padding-bottom: 100px; user-select: none; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .st-new { background: #ea580c; color: white; animation: pulse 2s infinite; }
+        .st-active { background: #3b82f6; color: white; }
+        .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .toggle-checkbox:checked { right: 0; border-color: #22c55e; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #22c55e; }
+        .toggle-checkbox { right: auto; left: 0; }
+        .toggle-label { width: 3rem; height: 1.5rem; }
+        .toggle-checkbox { width: 1.5rem; height: 1.5rem; }
+    </style>
+</head>
+<body class="select-none">
+
+    <div id="login" class="fixed inset-0 bg-[#0f172a] z-[100] flex items-center justify-center p-6">
+        <div class="w-full max-w-sm text-center">
+            <div class="w-24 h-24 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 text-5xl shadow-2xl text-white font-black app-logo">V</div>
+            <h2 class="text-4xl font-black mb-1 text-white app-name">VIKA</h2>
+            <p class="text-slate-400 text-sm mb-10 font-bold uppercase tracking-widest">Delivery Partner</p>
+            <input id="lPhone" type="number" placeholder="Mobile" class="w-full bg-slate-800 p-4 rounded-2xl text-white mb-4 border border-slate-700 outline-none">
+            <input id="lPass" type="password" placeholder="Password" class="w-full bg-slate-800 p-4 rounded-2xl text-white mb-6 border border-slate-700 outline-none">
+            <button id="loginBtn" class="w-full bg-white text-slate-900 py-4 rounded-2xl font-black shadow-xl hover:scale-105 transition">START DUTY</button>
+        </div>
+    </div>
+
+    <div id="mainApp" class="hidden min-h-screen">
+        <header class="fixed top-0 w-full bg-[#0f172a]/95 backdrop-blur z-40 px-5 py-4 flex justify-between items-center border-b border-white/5 pt-4">
+            <div class="flex items-center gap-3"><div class="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white text-lg font-black app-logo">V</div><div><h1 class="font-black text-lg text-white app-name">VIKA</h1><span id="statusText" class="text-[10px] font-bold text-slate-400 uppercase">Offline</span></div></div>
+            <div class="relative inline-block w-12 align-middle select-none"><input type="checkbox" name="toggle" id="dutyToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300"/><label for="dutyToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-700 cursor-pointer transition-colors duration-300"></label></div>
+        </header>
+
+        <div id="view-home" class="pt-24 px-4 pb-24 fade-in">
+            <div class="glass-panel p-6 rounded-[2rem] mb-6 shadow-2xl relative overflow-hidden">
+                <div class="grid grid-cols-2 gap-6 relative z-10"><div><p class="text-xs text-slate-400 font-bold uppercase mb-1">Earnings</p><h2 class="text-4xl font-black text-white">₹<span id="todayEarn">0</span></h2></div><div class="text-right border-l border-white/10 pl-4"><p class="text-[10px] text-slate-400 font-bold uppercase">Cash (COD)</p><h2 class="text-2xl font-black text-white text-orange-400 mb-1">₹<span id="codHand">0</span></h2></div></div>
+            </div>
+            <div class="flex justify-between items-center mb-4"><h3 class="text-sm font-black text-slate-400 uppercase tracking-widest"><i class="fas fa-bolt text-yellow-400 mr-2"></i> Tasks</h3><button onclick="document.getElementById('sosModal').classList.remove('hidden')" class="text-red-500 text-xs font-bold border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10">SOS</button></div>
+            <div id="taskList" class="space-y-4"><div class="text-center py-20 opacity-30"><i class="fas fa-power-off text-4xl mb-4"></i><p class="font-bold text-sm">You are Offline</p></div></div>
+        </div>
+
+        <div id="view-hist" class="hidden pt-24 px-4 pb-24 fade-in"><h2 class="text-2xl font-black mb-6 text-white">History</h2><div id="histList" class="space-y-3"></div></div>
+
+        <div id="view-prof" class="hidden pt-24 px-4 pb-24 fade-in"><div class="text-center mb-10 mt-10"><div class="w-28 h-28 bg-orange-600 rounded-full mx-auto flex items-center justify-center text-5xl mb-4 text-white font-black app-logo">V</div><h2 class="text-2xl font-black text-white app-name">VIKA</h2><p class="text-slate-400" id="pPhone">+91 XXXXX</p></div><button onclick="location.reload()" class="w-full bg-red-500/10 text-red-500 border border-red-500/20 py-4 rounded-xl font-bold">LOGOUT</button></div>
+
+        <div class="fixed bottom-0 w-full bg-[#0f172a] border-t border-slate-800 flex justify-around pb-6 pt-4 z-50">
+            <button onclick="nav('home')" id="btn-home" class="text-white flex flex-col items-center gap-1 opacity-100 transition"><i class="fas fa-map-marker-alt text-xl"></i><span class="text-[10px] font-bold">Tasks</span></button>
+            <button onclick="nav('hist')" id="btn-hist" class="text-slate-500 flex flex-col items-center gap-1 hover:text-white transition"><i class="fas fa-history text-xl"></i><span class="text-[10px] font-bold">History</span></button>
+            <button onclick="nav('prof')" id="btn-prof" class="text-slate-500 flex flex-col items-center gap-1 hover:text-white transition"><i class="fas fa-user text-xl"></i><span class="text-[10px] font-bold">Profile</span></button>
+        </div>
+    </div>
+
+    <div id="orderModal" class="fixed inset-0 bg-black/95 z-[80] hidden flex items-end justify-center backdrop-blur-sm"><div class="bg-slate-900 w-full max-w-md rounded-t-[2rem] p-6 slide-up border-t border-slate-700 h-[80vh] overflow-y-auto"><div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-black text-white">Details</h2><button onclick="document.getElementById('orderModal').classList.add('hidden')" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white"><i class="fas fa-times"></i></button></div><div id="modalContent"></div></div></div>
+    
+    <div id="sosModal" class="fixed inset-0 bg-black/95 z-[100] hidden flex items-center justify-center p-6 backdrop-blur-md">
+        <div class="w-full max-w-sm bg-slate-900 p-8 rounded-[2rem] border border-red-500/30 text-center relative">
+            <button onclick="document.getElementById('sosModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            <div class="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500 text-4xl animate-pulse"><i class="fas fa-exclamation-triangle"></i></div>
+            <h2 class="text-3xl font-black text-white mb-2">Emergency</h2>
+            <div class="space-y-3 mt-6"><a href="tel:100" class="flex items-center gap-4 bg-slate-800 p-4 rounded-xl border border-slate-700 hover:bg-red-600 hover:text-white transition"><div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center"><i class="fas fa-shield-alt"></i></div><span class="font-bold">Call Police (100)</span></a></div>
+        </div>
+    </div>
+
+    <audio id="bell" src="sound/rider_sound.mp3"></audio>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, updateDoc, doc, onSnapshot, query, where, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const SETUP = { AppName: "VIKA", AppLogo: "V" };
+        const firebaseConfig = { apiKey: "AIzaSyARK1SBVFmjEeqsPdficWzszf6AT1TKZQ8", authDomain: "singleapp-207e3.firebaseapp.com", projectId: "singleapp-207e3", storageBucket: "singleapp-207e3.firebasestorage.app", messagingSenderId: "1026534886749", appId: "1:1026534886749:web:52c3aa09e21a65f9342cb4", measurementId: "G-PPYBRX43TY" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        let me = null; let ordersList = []; let watchId = null; let isOnline = false; let prevCount = 0;
+
+        document.getElementById('loginBtn').onclick = async () => {
+            let p = document.getElementById('lPhone').value, pass = document.getElementById('lPass').value;
+            const q = query(collection(db, "riders"), where("phone", "==", p), where("pass", "==", pass));
+            const snap = await getDocs(q);
+            if(!snap.empty) {
+                me = { id: snap.docs[0].id, ...snap.docs[0].data() };
+                document.getElementById('login').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('rName').innerText = me.name;
+                initData();
+            } else alert("Invalid");
+        };
+
+        document.getElementById('dutyToggle').addEventListener('change', async (e) => {
+            isOnline = e.target.checked;
+            document.getElementById('statusText').innerText = isOnline ? "Online & Tracking" : "Offline";
+            document.getElementById('statusText').className = isOnline ? "text-[10px] font-bold text-green-500 uppercase" : "text-[10px] font-bold text-slate-400 uppercase";
+            if(me) await updateDoc(doc(db, "riders", me.id), { isOnline: isOnline });
+            if(isOnline) startGPS(); else stopGPS();
+            renderDashboard();
+        });
+
+        // FETCH GLOBAL SETTINGS & UPDATE LOGO
+        onSnapshot(doc(db, "settings", "global"), (doc) => { 
+            if(doc.exists()){ 
+                let s = doc.data(); 
+                document.querySelectorAll('.app-name').forEach(el=>el.innerText = s.shopName || "VIKA");
+                document.querySelectorAll('.app-logo').forEach(el=>{
+                    if(s.logoUrl) {
+                        el.innerHTML = `<img src="${s.logoUrl}" class="w-full h-full object-cover rounded-full">`;
+                        el.classList.remove('bg-orange-600','text-white');
+                    } else {
+                        el.innerHTML = (s.shopName || "V").charAt(0).toUpperCase();
+                        el.classList.add('bg-orange-600','text-white');
+                    }
+                });
+            } 
+        });
+
+        function startGPS() { if (navigator.geolocation && !watchId) { watchId = navigator.geolocation.watchPosition(async (pos) => { let active = ordersList.filter(o => ['Out for Delivery', 'Arrived'].includes(o.status)); active.forEach(async (o) => { await updateDoc(doc(db, "orders", o.id), { riderLat: pos.coords.latitude, riderLng: pos.coords.longitude }); }); }, (err) => {}, { enableHighAccuracy: true }); } }
+        function stopGPS() { if(watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; } }
+
+        function initData() {
+            onSnapshot(query(collection(db, "orders"), where("riderPhone", "==", me.phone)), (snap) => {
+                ordersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                let active = ordersList.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
+                if(active.length > prevCount && isOnline) document.getElementById('bell').play().catch(()=>{});
+                prevCount = active.length;
+                renderDashboard(); renderHistory();
+            });
+        }
+
+        function renderDashboard() {
+            let today = new Date().toLocaleDateString();
+            let delivered = ordersList.filter(o => o.status === 'Delivered' && new Date(o.timestamp).toLocaleDateString() === today);
+            document.getElementById('todayEarn').innerText = delivered.length * 30; document.getElementById('codHand').innerText = delivered.reduce((a,b) => a + (parseInt(b.amountToCollect)||0), 0);
+
+            if(!isOnline) { document.getElementById('taskList').innerHTML = `<div class="text-center py-20 opacity-30"><i class="fas fa-power-off text-4xl mb-4"></i><p>You are Offline</p></div>`; return; }
+            
+            let active = ordersList.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').sort((a,b) => b.timestamp - a.timestamp);
+            if(active.length === 0) { document.getElementById('taskList').innerHTML = `<div class="text-center py-20 opacity-30"><i class="fas fa-check-circle text-4xl mb-4"></i><p>No new orders</p></div>`; return; }
+
+            document.getElementById('taskList').innerHTML = active.map(o => {
+                let btn = '';
+                if(o.status === 'Preparing') btn = `<button onclick="upd('${o.id}','Accepted')" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold mt-2 shadow-lg">ACCEPT JOB</button>`;
+                else if(o.status === 'Accepted') btn = `<div class="bg-blue-900/40 text-blue-200 p-3 rounded-xl text-center text-xs mt-3 font-bold border border-blue-500/30">Go to Shop & Wait</div>`;
+                else if(o.status === 'Ready for Pickup') btn = `<div class="text-center text-orange-400 font-bold mb-2 animate-pulse text-xs">ORDER READY!</div><button onclick="upd('${o.id}','Out for Delivery')" class="w-full bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg">PICKUP & START</button>`;
+                else if(o.status === 'Out for Delivery') btn = `<div class="flex gap-2 mt-2"><a href="https://www.google.com/maps/search/?api=1&query=${o.customer.lat},${o.customer.lng}" target="_blank" class="flex-1 bg-white text-slate-900 py-3 rounded-xl font-bold text-center text-xs flex items-center justify-center gap-1">MAP</a><a href="tel:${o.customer.phone}" class="flex-1 bg-green-600 py-3 rounded-xl font-bold text-center text-xs flex items-center justify-center gap-1">CALL</a></div><button onclick="upd('${o.id}','Arrived')" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold mt-2 shadow-lg">I HAVE ARRIVED</button>`;
+                
+                // --- FIX: PAYMENT LOGIC ---
+                else if(o.status === 'Arrived') {
+                    if (o.amountToCollect === 0) {
+                        btn = `<button onclick="upd('${o.id}','Delivered')" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold mt-2 shadow-lg animate-pulse">MARK DELIVERED (ALREADY PAID) ✅</button>`;
+                    } else {
+                        btn = `<button onclick="upd('${o.id}','Delivered')" class="w-full bg-orange-600 text-white py-3 rounded-xl font-bold mt-2 shadow-lg">COLLECT CASH ₹${o.total} & FINISH</button>`;
+                    }
+                }
+
+                let collectInfo = (o.amountToCollect === 0) 
+                    ? `<span class="bg-green-500/20 text-green-400 text-[10px] px-2 py-1 rounded border border-green-500/50">PAID ONLINE</span>` 
+                    : `<span class="bg-orange-500/20 text-orange-400 text-[10px] px-2 py-1 rounded border border-orange-500/50">COLLECT: ₹${o.total}</span>`;
+
+                return `<div class="glass-panel p-5 rounded-[1.5rem] relative mb-4 border border-white/10 shadow-lg slide-up"><div class="flex justify-between items-start mb-3"><span class="status-badge ${['Ready for Pickup','Pending'].includes(o.status)?'st-new':'st-active'}">${o.status}</span>${collectInfo}</div><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-xl border border-slate-700">👤</div><div class="flex-1"><h3 class="font-bold text-sm text-white leading-none mb-1">${o.customer.name}</h3><p class="text-[10px] text-slate-400 truncate">${o.customer.addr}</p></div></div>${btn}<button onclick="showDetails('${o.id}')" class="w-full mt-3 text-center text-[10px] font-bold text-slate-500 hover:text-white transition">VIEW ITEMS ></button></div>`;
+            }).join('');
+        }
+
+        function renderHistory() { document.getElementById('histList').innerHTML = ordersList.filter(o => o.status === 'Delivered').map(o => `<div class="glass-panel p-4 rounded-xl flex justify-between items-center opacity-80 border border-white/5"><div><p class="text-[10px] text-slate-400 font-bold">${o.date}</p><h4 class="font-bold text-sm text-white">#${o.id.substr(0,5)} • ${o.customer.name}</h4><span class="text-[10px] bg-green-500/20 text-green-500 px-2 rounded font-bold">Delivered</span></div><div class="text-right"><p class="font-black text-white">₹${o.total}</p></div></div>`).join(''); }
+
+        window.showDetails = (oid) => {
+            let o = ordersList.find(x => x.id === oid);
+            let collectAmt = (o.amountToCollect === 0) ? "0 (Paid)" : `₹${o.total}`;
+            document.getElementById('modalContent').innerHTML = `<div class="text-center mb-6"><h1 class="text-4xl font-black text-white">Collect: ${collectAmt}</h1><p class="text-xs text-slate-400 font-bold uppercase">Payment: ${o.paymentMethod}</p></div><div class="bg-slate-800 p-4 rounded-xl mb-4 border border-slate-700 text-sm font-mono text-slate-400">${o.items.map(i => `<div class="flex justify-between mb-1"><span>${i.qty} x ${i.name}</span><span>₹${(i.offerPrice||i.price)*i.qty}</span></div>`).join('')}</div>`;
+            document.getElementById('orderModal').classList.remove('hidden');
+        }
+
+        window.upd = async (oid, s) => { 
+            let o = ordersList.find(x => x.id === oid);
+            // --- FIX: NO POPUP IF PAID ---
+            if(s === 'Delivered') {
+                if(o.amountToCollect > 0 && !confirm(`Collect Cash ₹${o.total}?`)) return;
+            }
+            await updateDoc(doc(db, "orders", oid), { status: s, timeline: arrayUnion({ status: s, msg: 'Rider Update', time: new Date().toLocaleTimeString() }) }); 
+        };
+        window.nav = (v) => { ['home','hist','prof'].forEach(x => { document.getElementById('view-'+x).classList.add('hidden'); document.getElementById('btn-'+x).classList.remove('text-white'); document.getElementById('btn-'+x).classList.add('text-slate-500'); }); document.getElementById('view-'+v).classList.remove('hidden'); document.getElementById('btn-'+v).classList.add('text-white'); document.getElementById('btn-'+v).classList.remove('text-slate-500'); }
+    </script>
+</body>
+</html>

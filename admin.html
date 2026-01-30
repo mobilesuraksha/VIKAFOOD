@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIKA HQ | Master Admin</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ea580c">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f1f5f9; }
+        .sidebar-link { transition: all 0.2s; border-radius: 12px; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+        .sidebar-link:hover { background: #fff7ed; color: #ea580c; }
+        .sidebar-link.active { background: #ea580c; color: white; box-shadow: 0 10px 20px -5px rgba(234, 88, 12, 0.4); }
+        .order-tab { cursor: pointer; padding: 10px 20px; border-radius: 99px; font-weight: 700; font-size: 13px; color: #64748b; border: 1px solid #e2e8f0; transition: all 0.2s; background: white; white-space: nowrap; }
+        .order-tab.active-tab { background: #0f172a; color: white; border-color: #0f172a; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2); }
+        .badge { background: #ef4444; color: white; padding: 2px 8px; border-radius: 99px; font-size: 10px; margin-left: 8px; vertical-align: middle; }
+        .active-tab .badge { background: white; color: #0f172a; }
+        .slide-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .blink-red { animation: blinkRed 1.5s infinite; }
+        @keyframes blinkRed { 0% { background-color: #fee2e2; border-color: #ef4444; } 50% { background-color: #fff; border-color: #fee2e2; } 100% { background-color: #fee2e2; border-color: #ef4444; } }
+        .modal-scroll::-webkit-scrollbar { width: 6px; }
+        .modal-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased" onclick="enableSound()">
+
+    <div id="soundOverlay" class="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center text-white cursor-pointer hidden">
+        <div class="text-center">
+            <div class="w-20 h-20 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce text-3xl font-black">V</div>
+            <h2 class="text-3xl font-black mb-2">Enable Sound</h2>
+            <p class="text-slate-400">Tap anywhere to start</p>
+        </div>
+    </div>
+
+    <div id="login" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 text-center shadow-2xl slide-up">
+            <div class="w-20 h-20 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-4xl font-black shadow-inner app-logo">A</div>
+            <h2 class="text-4xl font-black mb-2 text-slate-800 app-name">ADMIN</h2>
+            <input type="password" id="pin" placeholder="Enter Password" class="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl text-center font-black text-xl outline-none mb-6 focus:border-orange-500 transition">
+            <button onclick="auth()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold shadow-xl hover:scale-[1.02] transition">LOGIN DASHBOARD</button>
+        </div>
+    </div>
+
+    <div id="sidebarPanel" class="fixed top-0 left-0 h-full w-[280px] bg-white border-r border-slate-200 z-40 hidden p-6">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg app-logo">V</div>
+            <div><h1 class="text-2xl font-black italic tracking-tighter leading-none app-name">VIKA HQ</h1><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Manager</p></div>
+        </div>
+        <nav class="space-y-2">
+            <div onclick="view('dash')" id="nav-dash" class="sidebar-link active"><i class="fas fa-chart-pie w-6"></i> Dashboard</div>
+            <div onclick="view('live')" id="nav-live" class="sidebar-link"><i class="fas fa-tasks w-6"></i> Order Manager</div>
+            <div onclick="view('verify')" id="nav-verify" class="sidebar-link"><i class="fas fa-receipt w-6"></i> Verify Payments <span id="verifyBadge" class="hidden bg-red-500 text-white text-[10px] px-1.5 rounded-full ml-auto">0</span></div>
+            <div onclick="view('history')" id="nav-history" class="sidebar-link"><i class="fas fa-history w-6"></i> History</div>
+            <div onclick="view('menu')" id="nav-menu" class="sidebar-link"><i class="fas fa-tags w-6"></i> Menu & Offers</div>
+            <div onclick="view('riders')" id="nav-riders" class="sidebar-link"><i class="fas fa-motorcycle w-6"></i> Rider Fleet</div>
+            <div onclick="view('settings')" id="nav-settings" class="sidebar-link"><i class="fas fa-cog w-6"></i> Settings</div>
+        </nav>
+        <div class="absolute bottom-6 left-6 right-6"><button onclick="location.reload()" class="w-full bg-red-50 text-red-500 py-3 rounded-xl font-bold text-xs hover:bg-red-100 flex items-center justify-center gap-2"><i class="fas fa-power-off"></i> LOGOUT</button></div>
+    </div>
+
+    <div id="mainPanel" class="ml-[280px] min-h-screen hidden p-8 bg-slate-50">
+        
+        <div id="view-dash" class="slide-up">
+            <h2 class="text-3xl font-black mb-6 text-slate-800">Business Overview</h2>
+            <div class="grid grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-100"><p class="text-xs font-bold text-slate-400 uppercase">Revenue</p><h3 class="text-3xl font-black text-slate-800 mt-2" id="dRev">₹0</h3></div>
+                <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-100"><p class="text-xs font-bold text-slate-400 uppercase">Orders</p><h3 class="text-3xl font-black text-orange-600 mt-2" id="dOrd">0</h3></div>
+                <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-100"><p class="text-xs font-bold text-slate-400 uppercase">Pending</p><h3 class="text-3xl font-black text-red-600 mt-2 animate-pulse" id="dPending">0</h3></div>
+                <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-100"><p class="text-xs font-bold text-slate-400 uppercase">Items</p><h3 class="text-3xl font-black text-purple-600 mt-2" id="dItems">0</h3></div>
+            </div>
+        </div>
+
+        <div id="view-live" class="hidden slide-up">
+            <div class="flex justify-between items-center mb-6"><h2 class="text-3xl font-black text-slate-800">Order Manager</h2><div class="flex gap-2"><div class="bg-white px-4 py-2 rounded-full border border-slate-200 text-xs font-bold shadow-sm" id="liveTime">00:00:00</div><button onclick="stopSoundManually()" class="bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-red-200"><i class="fas fa-volume-mute"></i> Stop Alarm</button></div></div>
+            <div class="flex gap-3 mb-6 overflow-x-auto pb-2">
+                <button onclick="filterOrders('Pending')" id="tab-Pending" class="order-tab active-tab flex items-center"><i class="fas fa-bell text-yellow-400 mr-2"></i> New <span id="cnt-Pending" class="badge">0</span></button>
+                <button onclick="filterOrders('Preparing')" id="tab-Preparing" class="order-tab flex items-center"><i class="fas fa-fire text-orange-500 mr-2"></i> Kitchen <span id="cnt-Preparing" class="badge bg-slate-200 text-slate-600">0</span></button>
+                <button onclick="filterOrders('Ready for Pickup')" id="tab-Ready" class="order-tab flex items-center"><i class="fas fa-box text-blue-500 mr-2"></i> Dispatch <span id="cnt-Ready" class="badge bg-slate-200 text-slate-600">0</span></button>
+                <button onclick="filterOrders('Out for Delivery')" id="tab-Out" class="order-tab flex items-center"><i class="fas fa-motorcycle text-green-500 mr-2"></i> On Road <span id="cnt-Out" class="badge bg-slate-200 text-slate-600">0</span></button>
+            </div>
+            <div id="liveOrderList" class="space-y-4 pb-20"></div>
+        </div>
+
+        <div id="view-verify" class="hidden slide-up">
+            <h2 class="text-3xl font-black mb-6 text-slate-800">Verify Online Payments</h2>
+            <div id="verifyList" class="space-y-4 pb-20"><div class="text-center text-slate-400 py-10 font-bold opacity-50">No pending UPI verifications.</div></div>
+        </div>
+
+        <div id="view-menu" class="hidden slide-up">
+            <h2 class="text-3xl font-black mb-6">Menu & Offers</h2>
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm mb-8 border border-slate-100 flex gap-4 items-end">
+                <div class="w-1/4"><label class="text-[10px] font-bold text-slate-400 uppercase">Item Name</label><input id="pName" class="w-full border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500"></div>
+                <div class="w-1/6"><label class="text-[10px] font-bold text-slate-400 uppercase">Price (₹)</label><input id="pPrice" type="number" class="w-full border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500"></div>
+                <div class="w-1/6"><label class="text-[10px] font-bold text-red-400 uppercase">Offer Price</label><input id="pOffer" type="number" class="w-full border-2 border-red-100 p-3 rounded-xl text-sm font-bold outline-none focus:border-red-500 text-red-600"></div>
+                <div class="w-1/6"><label class="text-[10px] font-bold text-slate-400 uppercase">Category</label><select id="pCat" class="w-full border-2 border-slate-100 p-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500"><option>Food</option><option>Grocery</option><option>Fashion</option></select></div>
+                <div class="w-1/4 relative"><input type="file" id="pImg" class="hidden" onchange="compressAndPreview(this)"><label for="pImg" id="upLabel" class="block w-full border-2 border-dashed border-slate-300 p-3 rounded-xl text-center text-xs font-bold text-slate-400 cursor-pointer hover:bg-slate-50 flex flex-col items-center justify-center h-[50px]"><i class="fas fa-camera text-lg mb-1"></i> <span>Upload Img</span></label><img id="imgPrev" class="absolute top-0 left-0 w-full h-full object-cover rounded-xl hidden pointer-events-none"></div>
+                <button onclick="addProduct()" id="addProdBtn" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg">ADD</button>
+            </div>
+            <div id="menuList" class="grid grid-cols-4 gap-4 pb-20"></div>
+        </div>
+
+        <div id="view-history" class="hidden slide-up">
+            <div class="flex justify-between items-end mb-6"><div><h2 class="text-3xl font-black text-slate-800">Order History</h2><p class="text-sm text-slate-400 font-bold">Past records</p></div><div class="flex gap-3"><input type="date" id="histDate" class="bg-white border p-2 rounded-xl text-xs font-bold outline-none" onchange="filterHistory()"><input type="text" id="histSearch" placeholder="Search..." class="bg-white border p-2 rounded-xl text-xs font-bold outline-none w-48" onkeyup="filterHistory()"><button onclick="clearFilters()" class="bg-slate-200 px-4 rounded-xl text-xs font-bold hover:bg-slate-300">Clear</button></div></div>
+            <div id="fullHistoryList" class="bg-white rounded-b-2xl shadow-sm border border-t-0 border-slate-100 min-h-[400px]"></div>
+        </div>
+
+        <div id="view-riders" class="hidden slide-up">
+            <div class="flex justify-between items-center mb-6"><h2 class="text-3xl font-black text-slate-800">Rider Fleet</h2><div class="flex gap-2 bg-white p-2 rounded-xl shadow-sm"><input id="newRName" placeholder="Name" class="bg-slate-50 border rounded-lg px-3 py-1 text-sm font-bold w-32 outline-none"><input id="newRPhone" placeholder="Mobile" type="number" class="bg-slate-50 border rounded-lg px-3 py-1 text-sm font-bold w-32 outline-none"><input id="newRPass" placeholder="Pass" class="bg-slate-50 border rounded-lg px-3 py-1 text-sm font-bold w-24 outline-none"><button onclick="addRider()" class="bg-blue-600 text-white px-4 rounded-lg font-bold text-xs">ADD</button></div></div>
+            <div id="riderGrid" class="grid grid-cols-3 gap-6"></div>
+        </div>
+
+        <div id="view-settings" class="hidden slide-up">
+            <h2 class="text-3xl font-black mb-6">Settings</h2>
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm max-w-md border border-slate-100 mb-6">
+                <h3 class="text-xl font-bold mb-4 text-slate-800">Shop Identity & Payment</h3>
+                <div class="mb-4"><label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Shop Name</label><input id="setShopName" class="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl font-black text-sm outline-none" placeholder="e.g. Raju Sweets"></div>
+                <div class="mb-4"><label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Logo URL (Optional)</label><input id="setLogo" class="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl font-black text-sm outline-none" placeholder="http://..."></div>
+                <div class="mb-4"><label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">UPI ID</label><input id="setUpi" class="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl font-black text-sm outline-none" placeholder="example@ybl"></div>
+                <div class="mb-4"><label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Base Delivery Fee (₹)</label><input id="setFee" type="number" class="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl font-black text-xl outline-none"></div>
+                <div class="mb-8"><label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Surge Pricing</label><input id="setSurge" type="number" step="0.1" class="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl font-black text-xl outline-none"></div>
+                <button onclick="saveSettings()" class="w-full bg-orange-600 text-white py-4 rounded-xl font-bold shadow-lg">UPDATE SYSTEM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="assignModal" class="fixed inset-0 bg-black/90 z-[300] hidden flex items-center justify-center p-6 backdrop-blur-md"><div class="bg-white w-full max-w-md rounded-[2rem] p-6 slide-up shadow-2xl relative"><h3 class="text-xl font-black mb-4">Select Rider</h3><div id="assignRiderList" class="space-y-2 max-h-[60vh] overflow-y-auto modal-scroll"></div><button onclick="document.getElementById('assignModal').classList.add('hidden')" class="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold mt-4">CANCEL</button></div></div>
+
+    <div id="riderModal" class="fixed inset-0 bg-black/90 z-[300] hidden flex items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-white w-full max-w-3xl rounded-[2rem] p-8 slide-up relative max-h-[90vh] flex flex-col shadow-2xl">
+            <button onclick="document.getElementById('riderModal').classList.add('hidden')" class="absolute top-6 right-6 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-red-500 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
+            <div class="flex items-center gap-4 mb-8"><div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-3xl">🛵</div><div><h2 class="text-3xl font-black text-slate-900" id="rmName">Rider</h2><p class="text-sm font-bold text-slate-400" id="rmPhone">Mobile</p></div></div>
+            <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl mb-6 border border-slate-100"><p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Filter</p><div class="flex gap-2"><input type="date" id="rmDateFilter" class="bg-white border p-2 rounded-xl text-xs font-bold outline-none" onchange="updateRiderModalStats()"><button onclick="document.getElementById('rmDateFilter').value=''; updateRiderModalStats()" class="bg-slate-200 px-3 rounded-xl text-xs font-bold">All Time</button></div></div>
+            <div class="grid grid-cols-4 gap-4 mb-8"><div class="bg-blue-50 p-4 rounded-2xl text-center"><p class="text-[10px] font-black text-blue-400 uppercase">Delivered</p><h3 class="text-2xl font-black text-blue-700" id="rmDelivered">0</h3></div><div class="bg-red-50 p-4 rounded-2xl text-center"><p class="text-[10px] font-black text-red-400 uppercase">Cancelled</p><h3 class="text-2xl font-black text-red-700" id="rmCancelled">0</h3></div><div class="bg-green-50 p-4 rounded-2xl text-center"><p class="text-[10px] font-black text-green-400 uppercase">Cash</p><h3 class="text-2xl font-black text-green-700" id="rmCash">₹0</h3></div><div class="bg-orange-50 p-4 rounded-2xl text-center"><p class="text-[10px] font-black text-orange-400 uppercase">Earnings</p><h3 class="text-2xl font-black text-orange-700" id="rmEarn">₹0</h3></div></div>
+            <div class="flex-1 overflow-y-auto modal-scroll bg-slate-50 rounded-2xl p-2 border border-slate-100" id="rmList"></div>
+        </div>
+    </div>
+
+    <audio id="alarmSound" src="sound/admin_sound.mp3" loop></audio>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // CONFIG
+        const SETUP = { AppName: "VIKA", AppLogo: "V", OwnerPhone: "919876543210" };
+        document.querySelectorAll('.app-name').forEach(el => el.innerText = SETUP.AppName);
+        document.querySelectorAll('.app-logo').forEach(el => el.innerText = SETUP.AppLogo);
+
+        const firebaseConfig = { apiKey: "AIzaSyARK1SBVFmjEeqsPdficWzszf6AT1TKZQ8", authDomain: "singleapp-207e3.firebaseapp.com", projectId: "singleapp-207e3", storageBucket: "singleapp-207e3.firebasestorage.app", messagingSenderId: "1026534886749", appId: "1:1026534886749:web:52c3aa09e21a65f9342cb4", measurementId: "G-PPYBRX43TY" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let allOrders = [], allRiders = [], allProducts = [];
+        let currentTab = 'Pending';
+        let alarm = document.getElementById('alarmSound');
+        let isSoundEnabled = false;
+        let compressedImageBlob = null;
+        let selectedRiderPhone = null;
+        let activeAssignOrderId = null;
+
+        window.auth = () => { if(document.getElementById('pin').value === 'PASSWORD123') { document.getElementById('login').classList.add('hidden'); document.getElementById('soundOverlay').classList.remove('hidden'); } else alert("Invalid Password"); };
+        window.enableSound = () => { isSoundEnabled=true; document.getElementById('soundOverlay').classList.add('hidden'); document.getElementById('sidebarPanel').classList.remove('hidden'); document.getElementById('mainPanel').classList.remove('hidden'); initData(); };
+        window.stopSoundManually = () => { alarm.pause(); alarm.currentTime = 0; };
+
+        function initData() {
+            onSnapshot(collection(db, "orders"), (snap) => { 
+                allOrders = snap.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b)=>b.timestamp-a.timestamp);
+                updateCounters(); checkPending(); renderDashboard(); renderLiveOrders(); renderVerifyList(); filterHistory(); if(selectedRiderPhone) updateRiderModalStats(); 
+            });
+            onSnapshot(collection(db, "riders"), (snap) => { allRiders = snap.docs.map(d => ({id:d.id, ...d.data()})); renderRiders(); renderLiveOrders(); });
+            onSnapshot(collection(db, "products"), (snap) => { allProducts = snap.docs.map(d => ({id:d.id, ...d.data()})); renderMenu(); renderDashboard(); });
+            
+            // FETCH GLOBAL SETTINGS & UPDATE LOGO
+            onSnapshot(doc(db, "settings", "global"), (doc) => { 
+                if(doc.exists()){ 
+                    let s = doc.data(); 
+                    document.getElementById('setFee').value = s.fee; document.getElementById('setSurge').value = s.surge;
+                    document.getElementById('setShopName').value = s.shopName || "VIKA";
+                    document.getElementById('setLogo').value = s.logoUrl || "";
+                    document.getElementById('setUpi').value = s.upiId || "";
+                    
+                    document.querySelectorAll('.app-name').forEach(el=>el.innerText = s.shopName || "VIKA");
+                    document.querySelectorAll('.app-logo').forEach(el=>{
+                        if(s.logoUrl) {
+                            el.innerHTML = `<img src="${s.logoUrl}" class="w-full h-full object-cover rounded-xl">`;
+                            el.classList.remove('bg-orange-600','text-white');
+                        } else {
+                            // First Letter Logic
+                            el.innerHTML = (s.shopName || "V").charAt(0).toUpperCase();
+                            el.classList.add('bg-orange-600','text-white');
+                        }
+                    });
+                } 
+            });
+            setInterval(() => { document.getElementById('liveTime').innerText = new Date().toLocaleTimeString(); }, 1000);
+        }
+
+        function updateCounters() {
+            try {
+                document.getElementById('cnt-Pending').innerText = allOrders.filter(o => o.status === 'Pending').length;
+                document.getElementById('cnt-Preparing').innerText = allOrders.filter(o => ['Preparing','Accepted'].includes(o.status)).length;
+                document.getElementById('cnt-Ready').innerText = allOrders.filter(o => o.status === 'Ready for Pickup').length;
+                document.getElementById('cnt-Out').innerText = allOrders.filter(o => o.status === 'Out for Delivery').length;
+                let pendingVerify = allOrders.filter(o => o.paymentMethod === 'UPI' && !o.paymentVerified && o.status !== 'Cancelled' && o.status !== 'Delivered').length;
+                let vBadge = document.getElementById('verifyBadge'); vBadge.innerText = pendingVerify; vBadge.classList.toggle('hidden', pendingVerify === 0);
+            } catch(e) {}
+        }
+
+        function checkPending() {
+            let pendingCount = allOrders.filter(o => o.status === 'Pending').length;
+            if (pendingCount > 0 && isSoundEnabled) { alarm.play().catch(e=>{}); } else { alarm.pause(); alarm.currentTime=0; }
+            document.getElementById('dPending').innerText = pendingCount;
+        }
+
+        function renderDashboard() {
+            let delivered = allOrders.filter(o => o.status === 'Delivered');
+            document.getElementById('dRev').innerText = '₹' + delivered.reduce((a,b)=>a+(parseInt(b.total)||0), 0);
+            document.getElementById('dOrd').innerText = allOrders.length; 
+            document.getElementById('dRiders').innerText = allRiders.length; 
+            document.getElementById('dItems').innerText = allProducts.length;
+        }
+
+        function renderVerifyList() {
+            let list = allOrders.filter(o => o.paymentMethod === 'UPI' && !o.paymentVerified && o.status !== 'Cancelled' && o.status !== 'Delivered');
+            document.getElementById('verifyList').innerHTML = list.map(o => `
+                <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-purple-100 flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1"><span class="font-black text-lg text-slate-800">#${o.id.substr(0,5)}</span><span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-1 rounded">₹${o.total}</span></div>
+                        <p class="text-sm font-bold text-slate-600">${o.customer.name} | ${o.customer.phone}</p>
+                        <p class="font-mono bg-slate-50 text-slate-500 text-xs p-1 rounded mt-1 border border-slate-200">UTR: ${o.utr || 'Not Provided'}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="verifyPaymentAction('${o.id}', false)" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl font-bold text-xs hover:bg-red-100">REJECT (COD)</button>
+                        <button onclick="verifyPaymentAction('${o.id}', true)" class="bg-green-500 text-white px-6 py-2 rounded-xl font-bold text-xs shadow-lg hover:scale-105 transition">VERIFY ✅</button>
+                    </div>
+                </div>
+            `).join('') || '<div class="text-center text-slate-400 py-10 font-bold opacity-50">No pending verifications</div>';
+        }
+
+        // IMPORTANT FIX: Setting amountToCollect to 0 explicitly
+        window.verifyPaymentAction = async (id, isVerified) => {
+            if(isVerified) { 
+                await updateDoc(doc(db, "orders", id), { paymentVerified: true, amountToCollect: 0 }); 
+                alert("Verified! COD set to 0. Rider will see PAID."); 
+            } else { 
+                await updateDoc(doc(db, "orders", id), { paymentVerified: false, amountToCollect: allOrders.find(o=>o.id==id).total }); 
+                alert("Rejected! Rider will collect Cash."); 
+            }
+        };
+
+        window.filterOrders = (s) => { 
+            currentTab=s; 
+            document.querySelectorAll('.order-tab').forEach(el=>el.classList.remove('active-tab')); 
+            document.querySelectorAll('.badge').forEach(el => { el.classList.remove('bg-white', 'text-slate-900'); el.classList.add('bg-slate-200', 'text-slate-600'); });
+            let activeBtn = document.getElementById('tab-'+s.split(' ')[0]);
+            if(activeBtn) { activeBtn.classList.add('active-tab'); let badge = activeBtn.querySelector('.badge'); if(badge) { badge.classList.remove('bg-slate-200', 'text-slate-600'); badge.classList.add('bg-white', 'text-slate-900'); } }
+            renderLiveOrders(); 
+        };
+
+        function renderLiveOrders() {
+            let filtered = [];
+            if(currentTab === 'Preparing') filtered = allOrders.filter(o => o.status === 'Preparing' || o.status === 'Accepted');
+            else filtered = allOrders.filter(o => o.status === currentTab);
+
+            document.getElementById('liveOrderList').innerHTML = filtered.map(o => {
+                let riderOpts = allRiders.map(r => `<option value="${r.phone}|${r.name}">${r.name} ${r.isOnline?'(🟢)':'(🔴)'}</option>`).join('');
+                let action = '';
+                let cardClass = 'border-slate-100';
+                
+                let payStatus = '';
+                if(o.paymentMethod === 'UPI') {
+                    if(o.paymentVerified) payStatus = `<span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded font-bold border border-green-200">PAID ONLINE</span>`;
+                    else payStatus = `<span class="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold border border-purple-200 animate-pulse">VERIFY UTR</span>`;
+                } else {
+                    payStatus = `<span class="text-[10px] bg-orange-100 text-orange-700 px-2 py-1 rounded font-bold border border-orange-200">COD</span>`;
+                }
+
+                if(o.status === 'Pending') {
+                    cardClass = 'blink-red border-l-4 border-l-red-500';
+                    action = `<div class="flex gap-2 justify-end mt-4"><button onclick="updateStatus('${o.id}','Cancelled')" class="text-red-500 font-bold text-xs px-4">REJECT</button><button onclick="acceptAndAutoAssign('${o.id}')" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-xs shadow-lg animate-pulse">ACCEPT & ASSIGN 🚀</button></div>`;
+                } else if (o.status === 'Preparing' || o.status === 'Accepted') {
+                    cardClass = 'border-l-4 border-l-orange-400';
+                    let assignInfo = o.riderName ? `<p class="text-xs text-blue-600 font-bold mb-2"><i class="fas fa-motorcycle"></i> Assigned: ${o.riderName}</p>` : `<p class="text-xs text-red-400 font-bold mb-2">No Rider (Auto-fail)</p>`;
+                    action = `${assignInfo}<button onclick="updateStatus('${o.id}','Ready for Pickup')" class="bg-green-500 text-white w-full py-3 rounded-xl font-bold mt-2 shadow-lg">FOOD READY ✅</button>`;
+                } else if (o.status === 'Ready for Pickup') {
+                    cardClass = 'border-l-4 border-l-blue-500';
+                    let currentRider = o.riderName ? `<div class="text-xs font-bold text-slate-500 mb-2">Current: ${o.riderName}</div>` : '';
+                    action = `${currentRider}<button onclick="openAssignModal('${o.id}')" class="bg-blue-600 text-white w-full py-3 rounded-xl font-bold text-xs shadow-lg">MANUAL DISPATCH</button>`;
+                } else if (o.status === 'Out for Delivery') {
+                    cardClass = 'border-l-4 border-l-green-500';
+                    action = `<div class="mt-4 bg-slate-50 p-2 rounded text-center text-xs font-bold text-slate-500"><i class="fas fa-motorcycle"></i> ${o.riderName} | Tracking Live...</div>`;
+                }
+
+                return `<div class="bg-white p-6 rounded-[1.5rem] shadow-sm border ${cardClass} relative">
+                    <div class="flex justify-between items-start mb-2"><div><span class="font-black text-lg text-slate-800">#${o.id.substr(0,5)}</span> ${payStatus}</div><span class="font-black text-xl text-slate-900">₹${o.total}</span></div>
+                    <div class="mb-3"><p class="font-bold text-sm text-slate-700">${o.customer.name}</p><p class="text-xs text-slate-500 bg-slate-50 inline-block px-2 py-1 rounded mt-1">${o.customer.addr}</p></div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs font-bold text-slate-600 mb-4">${o.items.map(i => `${i.qty}x ${i.name}`).join(', ')}</div>
+                    ${action}
+                </div>`;
+            }).join('') || '<div class="text-center text-slate-400 py-10 font-bold opacity-50 flex flex-col items-center gap-2"><i class="fas fa-box-open text-2xl"></i> No orders here</div>';
+        }
+
+        window.updateStatus = async (id, s) => await updateDoc(doc(db,"orders",id), {status:s});
+        
+        window.acceptAndAutoAssign = async (orderId) => {
+            let onlineRiders = allRiders.filter(r => r.isOnline);
+            let updateData = { status: 'Preparing' };
+            if (onlineRiders.length > 0) {
+                let rider = onlineRiders[0]; 
+                updateData.riderName = rider.name; updateData.riderPhone = rider.phone;
+                alert(`Assigned to ${rider.name}`);
+            } else alert("No online riders. Assign manually in Ready tab.");
+            await updateDoc(doc(db, "orders", orderId), updateData);
+        };
+
+        window.openAssignModal = (id) => {
+            activeAssignOrderId = id;
+            document.getElementById('assignRiderList').innerHTML = allRiders.map(r => `
+                <div onclick="confirmAssignment('${r.phone}', '${r.name}')" class="flex justify-between items-center p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 border border-slate-200">
+                    <div><p class="font-bold text-sm text-slate-800">${r.name}</p><p class="text-xs text-slate-400">${r.phone}</p></div>
+                    <span class="text-xs font-bold px-2 py-1 rounded ${r.isOnline?'bg-green-100 text-green-600':'bg-slate-200 text-slate-500'}">${r.isOnline?'Online':'Offline'}</span>
+                </div>`).join('');
+            document.getElementById('assignModal').classList.remove('hidden');
+        };
+
+        window.confirmAssignment = async (phone, name) => {
+            if(!activeAssignOrderId) return;
+            await updateDoc(doc(db, "orders", activeAssignOrderId), { status:'Out for Delivery', riderPhone: phone, riderName: name });
+            document.getElementById('assignModal').classList.add('hidden'); activeAssignOrderId = null;
+        };
+
+        window.filterHistory = () => {
+            let term = document.getElementById('histSearch').value.toLowerCase(), dateVal = document.getElementById('histDate').value;
+            let filtered = allOrders.filter(o => (o.status === 'Delivered' || o.status === 'Cancelled') && (o.id.toLowerCase().includes(term) || o.customer.name.toLowerCase().includes(term)) && (!dateVal || new Date(o.timestamp).toISOString().split('T')[0] === dateVal));
+            document.getElementById('fullHistoryList').innerHTML = filtered.map(o => `<div class="flex p-4 border-b border-slate-50 text-xs font-bold items-center"><div class="w-1/6">#${o.id.substr(0,5)}</div><div class="w-1/6">${o.date.split(',')[0]}</div><div class="w-1/6">${o.customer.name}</div><div class="w-1/6">${o.riderName||'-'}</div><div class="w-1/6"><span class="${o.status==='Delivered'?'text-green-600':'text-red-600'}">${o.status}</span></div><div class="w-1/6 text-right">₹${o.total}</div></div>`).join('');
+        };
+        window.clearFilters = () => { document.getElementById('histSearch').value=''; document.getElementById('histDate').value=''; filterHistory(); }
+
+        window.compressAndPreview = (input) => {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader(); reader.readAsDataURL(input.files[0]);
+                reader.onload = (event) => {
+                    const img = new Image(); img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas'); const MAX_WIDTH = 500; 
+                        const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        compressedImageBlob = canvas.toDataURL('image/jpeg', 0.6); 
+                        document.getElementById('imgPrev').src = compressedImageBlob; document.getElementById('imgPrev').classList.remove('hidden'); document.getElementById('upLabel').classList.add('hidden');
+                    }
+                }
+            }
+        }
+
+        window.addProduct = async () => { 
+            let name=document.getElementById('pName').value, price=document.getElementById('pPrice').value, offer=document.getElementById('pOffer').value, cat=document.getElementById('pCat').value;
+            if(!name || !price || !compressedImageBlob) return alert("Details & Image Required!");
+            let btn = document.getElementById('addProdBtn'); btn.innerHTML = `<span class="loader"></span> Saving...`;
+            try {
+                await addDoc(collection(db,"products"), {name, price, offerPrice:offer, cat, img:compressedImageBlob}); 
+                alert("Product Added!");
+                document.getElementById('pName').value=""; document.getElementById('pPrice').value=""; document.getElementById('pOffer').value="";
+                document.getElementById('imgPrev').classList.add('hidden'); document.getElementById('upLabel').classList.remove('hidden'); compressedImageBlob = null;
+            } catch(e) { alert("Error: "+e.message); }
+            btn.innerText = "ADD";
+        };
+
+        window.deleteProd = async (id) => { if(confirm("Delete item?")) await deleteDoc(doc(db,"products",id)); };
+        function renderMenu() { document.getElementById('menuList').innerHTML = allProducts.map(p => `<div class="bg-white p-3 rounded-xl border relative group"><button onclick="deleteProd('${p.id}')" class="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full text-xs hidden group-hover:flex items-center justify-center">X</button>${p.offerPrice ? '<span class="absolute top-1 left-1 bg-red-500 text-white text-[10px] px-2 rounded font-bold">OFFER</span>' : ''}<img src="${p.img}" class="w-full h-20 object-cover rounded-lg mb-2"><p class="font-bold text-xs truncate">${p.name}</p><div class="flex items-center gap-2">${p.offerPrice ? `<span class="text-xs text-gray-400 line-through">₹${p.price}</span><span class="text-xs font-black text-red-600">₹${p.offerPrice}</span>` : `<span class="text-xs font-black">₹${p.price}</span>`}</div></div>`).join(''); }
+
+        window.addRider = async () => { let n=document.getElementById('newRName').value, p=document.getElementById('newRPhone').value, pass=document.getElementById('newRPass').value; if(n && p && pass) { await addDoc(collection(db,"riders"), {name:n, phone:p, pass:pass}); alert("Rider Added"); } };
+        window.deleteRider = async (id) => { if(confirm("Remove?")) await deleteDoc(doc(db,"riders",id)); };
+        function renderRiders() { document.getElementById('riderGrid').innerHTML = allRiders.map(r => `<div class="bg-white p-6 rounded-xl shadow-sm border relative group hover:shadow-md transition"><button onclick="deleteRider('${r.id}')" class="absolute top-2 right-2 text-red-300 hover:text-red-600"><i class="fas fa-trash"></i></button><h3 class="font-black text-xl">${r.name}</h3><p class="text-sm font-bold text-slate-400 mb-4">${r.phone}</p><button onclick="openRiderStats('${r.phone}', '${r.name}')" class="w-full bg-slate-100 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-200">History</button></div>`).join(''); }
+
+        // --- ANALYTICS ---
+        window.openRiderStats = (phone, name) => { selectedRiderPhone = phone; document.getElementById('rmName').innerText = name; document.getElementById('rmPhone').innerText = phone; document.getElementById('rmDateFilter').value = ''; document.getElementById('riderModal').classList.remove('hidden'); updateRiderModalStats(); };
+        window.updateRiderModalStats = () => {
+            if (!selectedRiderPhone) return;
+            let dateFilter = document.getElementById('rmDateFilter').value;
+            let riderOrders = allOrders.filter(o => o.riderPhone === selectedRiderPhone && (!dateFilter || new Date(o.timestamp).toISOString().split('T')[0] === dateFilter));
+            let delivered = riderOrders.filter(o => o.status === 'Delivered');
+            document.getElementById('rmDelivered').innerText = delivered.length;
+            document.getElementById('rmCancelled').innerText = riderOrders.filter(o => o.status === 'Cancelled').length;
+            document.getElementById('rmCash').innerText = '₹' + delivered.reduce((sum, o) => sum + (parseInt(o.total) || 0), 0);
+            document.getElementById('rmEarn').innerText = '₹' + delivered.length * 30;
+            document.getElementById('rmList').innerHTML = riderOrders.map(o => `<div class="flex justify-between items-center bg-white p-3 mb-2 rounded-xl border border-slate-100 shadow-sm"><div><p class="text-[10px] font-bold text-slate-400">${o.date}</p><p class="font-bold text-sm text-slate-800">#${o.id.substr(0,5)}</p></div><div class="text-right"><span class="text-[10px] px-2 py-1 rounded font-bold ${o.status==='Delivered'?'bg-green-100 text-green-600':'bg-red-100 text-red-600'}">${o.status}</span><p class="font-black text-slate-900 mt-1">₹${o.total}</p></div></div>`).join('');
+        };
+
+        window.saveSettings = async () => { 
+            await setDoc(doc(db,"settings","global"), { 
+                fee: document.getElementById('setFee').value, 
+                surge: document.getElementById('setSurge').value,
+                shopName: document.getElementById('setShopName').value,
+                logoUrl: document.getElementById('setLogo').value,
+                upiId: document.getElementById('setUpi').value
+            }); 
+            alert("Settings Updated! Reload App."); 
+        };
+        window.view = (v) => { ['dash','live','history','riders','menu','settings', 'verify'].forEach(x => { document.getElementById('view-'+x).classList.add('hidden'); document.getElementById('nav-'+x).classList.remove('active'); }); document.getElementById('view-'+v).classList.remove('hidden'); document.getElementById('nav-'+v).classList.add('active'); };
+    </script>
+</body>
+</html>
